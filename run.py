@@ -36,7 +36,7 @@ async def process_links(
         logging.info(f'Creating task for link: {link} (industry: {industry})')
         task = asyncio.create_task(summarizer.process_url(link, industry, progress_bar))
         tasks.append((task, industry))
-
+    
     # summaries = await asyncio.gather(*[task for task, _ in tasks])
     # for summary, (_, industry) in zip(summaries, tasks):
     #     if summary: 
