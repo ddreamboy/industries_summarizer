@@ -7,6 +7,12 @@ from report_parser import process_reports
 
 class ReportGenerator:
     def __init__(self, base_url: str = 'http://127.0.0.1:11434'):
+        """
+        Initializes the ReportGenerator with a base URL for the language model API.
+
+        Args:
+            base_url (str): The base URL for the language model API.
+        """
         self.base_url = base_url
         self.llm = ChatOllama(model='llama3:instruct', base_url=self.base_url)
         self.prompt_template = PromptTemplate(
@@ -29,6 +35,17 @@ class ReportGenerator:
         )
 
     def process_summary(self, summary: str, report_template: str, industry: str) -> str:
+        """
+        Processes a summary using the language model to generate a report.
+
+        Args:
+            summary (str): The summary to be analyzed.
+            report_template (str): The template for the report.
+            industry (str): The industry for which the summary is being analyzed.
+
+        Returns:
+            str: The generated report.
+        """
         prompt = self.prompt_template.format(
             summary=summary, report_template=report_template, industry=industry
         )
@@ -37,6 +54,15 @@ class ReportGenerator:
         return report
 
     def load_summaries(self, industry: str) -> list:
+        """
+        Loads summaries from markdown files for a given industry.
+
+        Args:
+            industry (str): The industry for which summaries are to be loaded.
+
+        Returns:
+            list: A list of tuples containing filenames and their corresponding summaries.
+        """
         directory = os.path.join('summarized_sources', industry)
         summaries = []
         for root, _, filenames in os.walk(directory):
@@ -48,6 +74,13 @@ class ReportGenerator:
         return summaries
 
     def generate_report(self, summaries: list, industry: str) -> None:
+        """
+        Generates reports for a list of summaries and saves them to files.
+
+        Args:
+            summaries (list): A list of tuples containing filenames and their corresponding summaries.
+            industry (str): The industry for which reports are to be generated.
+        """
         report_template = (
             '{\n'
             '    url: "https://www.example.com",\n'
@@ -62,7 +95,7 @@ class ReportGenerator:
         for filename, summary in tqdm(summaries, desc='Processing summaries', unit='summary'):
             report_filename = f"{os.path.splitext(filename)[0]}_report.md"
             report_path = os.path.join(report_dir, report_filename)
-            
+
             if os.path.exists(report_path) and os.path.getsize(report_path) > 0:
                 continue
 
@@ -72,6 +105,9 @@ class ReportGenerator:
 
 
 def main() -> None:
+    """
+    The main function to generate reports for predefined industries.
+    """
     generator = ReportGenerator()
     industries = ['smart_manufacturing']
     for industry in industries:
