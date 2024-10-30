@@ -43,13 +43,13 @@ industries_summarizer/
 - **run.py**: Основной скрипт для запуска всего процесса.
 - **scripts/**: Содержит все основные скрипты для агрегации, суммирования, генерации отчетов и парсинга.
 - **search_quaries/**: Содержит JSON-файлы с поисковыми запросами для различных отраслей.
-- **.gitignore**: Указывает файлы и директории, которые должны быть проигнорированы Git.
 
 ## Установка
 
 ### Предварительные требования
 
 - Python 3.8 или выше
+- [Ollama](https://ollama.com/download)
 
 ### Шаги
 
@@ -58,14 +58,18 @@ industries_summarizer/
     git clone https://github.com/ddreamboy/industries_summarizer.git
     cd industries_summarizer
     ```
-
-2. **Создайте и активируйте виртуальную среду**:
+2. **Установите Ollama** из [официального источника](https://ollama.com/download).
+Запустите Ollama и выполните команду для установки модели:
+    ```sh
+    ollama run llama3:instruct
+    ```
+3. **Создайте и активируйте виртуальную среду**:
     ```sh
     python -m venv venv
     source venv/bin/activate  # В Windows используйте `venv\Scripts\activate`
     ```
 
-3. **Установите необходимые пакеты**:
+4. **Установите необходимые пакеты**:
     ```sh
     pip install -r requirements.txt
     ```
