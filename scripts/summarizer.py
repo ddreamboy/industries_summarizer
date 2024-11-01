@@ -213,7 +213,21 @@ class Summarizer:
         if url in self.processed_links.get(industry, {}):
             progress_bar.set_postfix_str(f'URL already processed: {url}')
             progress_bar.update(1)
-            return
+            return None
+
+        try:
+            async with self.semaphore:
+                progress_bar.set_postfix_str(f'Processing: {url}')
+                summary = await self.summarize(url, industry)
+                if summary is not None and self.need_save_summary:
+                    await self.save_summary(url, industry, summary)
+                    self.summarized_links += 1
+                progress_bar.update(1)
+                return summary
+        except Exception as e:
+            logging.error(f'Error processing URL {url}: {e}')
+            progress_bar.update(1)
+            return None
 
         async with self.semaphore:
             progress_bar.set_postfix_str(f'Processing: {url}')

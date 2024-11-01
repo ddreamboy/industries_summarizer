@@ -73,6 +73,7 @@ class SearchResultAggregator:
             json.dump(existing_data, f, ensure_ascii=False, indent=2)
 
     def load_queries(self) -> dict:
+
         '''
         Loads the search queries from the JSON file.
 
@@ -82,13 +83,14 @@ class SearchResultAggregator:
         Raises:
             FileNotFoundError: If the query file is not found.
         '''
-        queries_path = get_project_root() / 'search_queries'
+        queries_path = get_project_root() / 'search_quaries'
         filename = queries_path / self.queries_filename
+
         if os.path.exists(filename):
             with open(filename, 'r', encoding='utf-8') as f:
                 return json.load(f)
         else:
-            raise FileNotFoundError(f'No query file found: {self.queries_filename}')
+            raise FileNotFoundError(f'No query file found: {filename}')
 
     def get_search_results(self, query: str) -> list:
         '''

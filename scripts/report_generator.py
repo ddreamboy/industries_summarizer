@@ -2,7 +2,7 @@ import os
 from tqdm import tqdm
 from langchain_ollama import ChatOllama
 from langchain.prompts import PromptTemplate
-from report_parser import process_reports
+from .report_parser import process_reports
 
 
 class ReportGenerator:
@@ -109,7 +109,7 @@ def main() -> None:
     The main function to generate reports for predefined industries.
     """
     generator = ReportGenerator()
-    industries = ['smart_manufacturing']
+    industries = ['e_commerce']
     for industry in industries:
         summaries = generator.load_summaries(industry)
         generator.generate_report(summaries, industry)
