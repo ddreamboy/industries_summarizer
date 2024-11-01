@@ -30,7 +30,21 @@ os.environ['USER_AGENT'] = (
 
 
 class Summarizer:
-    def __init__(self, base_url: str = 'http://127.0.0.1:11434', 
+    """
+    A class to summarize web documents for industry-specific analysis.
+
+    Attributes:
+        base_url (str): The base URL for the local Ollama API.
+        llm_chain (RunnableSequence): The LLM chain for summarization.
+        semaphore (asyncio.Semaphore): Semaphore to limit concurrent tasks.
+        need_save_summary (bool): Flag to determine if summaries should be saved.
+        processed_links_file (str): Path to the file storing processed links.
+        processed_links (dict): Dictionary of processed links.
+        total_links (int): Total number of links to process.
+        summarized_links (int): Number of links successfully summarized.
+    """
+
+    def __init__(self, base_url: str = 'http://127.0.0.1:11434',
                  max_concurrent_tasks: int = 2, need_save_summary: bool = True):
         self.base_url = base_url
         self.llm_chain = self.setup_summarization_chain()
@@ -44,6 +58,12 @@ class Summarizer:
         self.summarized_links = 0
 
     def setup_summarization_chain(self) -> RunnableSequence:
+        """
+        Sets up the LLM chain for summarization.
+
+        Returns:
+            RunnableSequence: The LLM chain configured with a prompt template.
+        """
         prompt_template = PromptTemplate(
             template=(
                 'As an industry-specific summarizer, create a concise summary of the '
@@ -71,12 +91,26 @@ class Summarizer:
         return llm_chain
 
     def load_processed_links(self) -> dict:
+        """
+        Loads the processed links from a JSON file.
+
+        Returns:
+            dict: A dictionary of processed links.
+        """
         if os.path.exists(self.processed_links_file):
             with open(self.processed_links_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         return {}
 
     def save_processed_link(self, url: str, industry: str, filepath: str) -> None:
+        """
+        Saves a processed link to the JSON file.
+
+        Args:
+            url (str): The URL of the processed link.
+            industry (str): The industry associated with the link.
+            filepath (str): The file path where the summary is saved.
+        """
         if industry not in self.processed_links:
             self.processed_links[industry] = {}
         self.processed_links[industry][url] = filepath
@@ -84,6 +118,15 @@ class Summarizer:
             json.dump(self.processed_links, f, ensure_ascii=False, indent=2)
 
     async def load_document(self, url: str) -> str:
+        """
+        Loads the document content from a given URL.
+
+        Args:
+            url (str): The URL of the document to load.
+
+        Returns:
+            str: The content of the document.
+        """
         try:
             loader = WebBaseLoader(url)
             return loader.load()
@@ -92,6 +135,16 @@ class Summarizer:
             return None
 
     async def summarize(self, url: str, industry: str) -> str:
+        """
+        Summarizes the document content for a given URL and industry.
+
+        Args:
+            url (str): The URL of the document to summarize.
+            industry (str): The industry for which the summary is tailored.
+
+        Returns:
+            str: The summary of the document.
+        """
         docs = await self.load_document(url)
         if docs is None:
             return None
@@ -106,6 +159,15 @@ class Summarizer:
             return None
 
     def extract_name_from_url(self, url: str) -> str:
+        """
+        Extracts the domain name from a given URL.
+
+        Args:
+            url (str): The URL to extract the domain name from.
+
+        Returns:
+            str: The extracted domain name.
+        """
         parsed_url = urlparse(url)
         domain = parsed_url.netloc
         if domain.startswith('www.'):
@@ -113,6 +175,14 @@ class Summarizer:
         return domain
 
     async def save_summary(self, url: str, industry: str, summary: str) -> None:
+        """
+        Saves the summary to a markdown file.
+
+        Args:
+            url (str): The URL of the summarized document.
+            industry (str): The industry for which the summary is tailored.
+            summary (str): The summary content.
+        """
         try:
             root_directory = os.path.join(get_project_root(), 'summarized_sources')
             industry_directory = os.path.join(root_directory, industry)
@@ -129,6 +199,17 @@ class Summarizer:
             logging.error(f'Error saving summary for {url}: {e}')
 
     async def process_url(self, url: str, industry: str, progress_bar) -> str:
+        """
+        Processes a URL to summarize its content and update the progress bar.
+
+        Args:
+            url (str): The URL to process.
+            industry (str): The industry for which the summary is tailored.
+            progress_bar: The progress bar to update.
+
+        Returns:
+            str: The summary of the document.
+        """
         if url in self.processed_links.get(industry, {}):
             progress_bar.set_postfix_str(f'URL already processed: {url}')
             progress_bar.update(1)

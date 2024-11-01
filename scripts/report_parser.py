@@ -88,6 +88,7 @@ def save_report(filepath: str, report: str) -> None:
 
 
 def main() -> None:
+    '''Main function to process reports for predefined industries.'''
     industries = ['venture_capital', 'document_automation']
     for industry in industries:
         process_reports(industry)

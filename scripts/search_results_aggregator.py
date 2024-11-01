@@ -5,6 +5,7 @@ import json
 import os
 from datetime import datetime
 import logging
+from pathlib import Path
 from .get_root_project_dir import get_project_root
 
 
@@ -23,6 +24,16 @@ logging.basicConfig(
 class SearchResultAggregator:
     def __init__(self, queries_filename: str, start: int = 3, stop: int = 6,
                  max_workers: int = 20, save_results: bool = True):
+        '''
+        Initializes the SearchResultAggregator with the provided parameters.
+
+        Args:
+            queries_filename (str): The filename of the JSON file containing search queries.
+            start (int): The starting index for search results.
+            stop (int): The stopping index for search results.
+            max_workers (int): The maximum number of worker threads.
+            save_results (bool): Flag to save results to a JSON file.
+        '''
         self.queries_filename = (queries_filename if queries_filename.endswith('.json')
                                  else f'{queries_filename}.json')
         self.start = start
@@ -35,7 +46,14 @@ class SearchResultAggregator:
         self.sources_path = self.raw_sources_dir / f'raw_sources_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
 
     def save_to_json(self, data: dict, filename: str = None) -> None:
-        filename = filename or self.sources_path
+        '''
+        Saves the provided data to a JSON file.
+
+        Args:
+            data (dict): The data to save.
+            filename (str, optional): The filename to save the data to. Defaults to None.
+        '''
+        filename = str(filename or self.sources_path)
         try:
             if os.path.exists(filename) and os.path.getsize(filename) > 0:
                 with open(filename, 'r', encoding='utf-8') as f:
@@ -55,6 +73,16 @@ class SearchResultAggregator:
             json.dump(existing_data, f, ensure_ascii=False, indent=2)
 
     def load_queries(self) -> dict:
+
+        '''
+        Loads the search queries from the JSON file.
+
+        Returns:
+            dict: The loaded search queries.
+
+        Raises:
+            FileNotFoundError: If the query file is not found.
+        '''
         queries_path = get_project_root() / 'search_quaries'
         filename = queries_path / self.queries_filename
 
@@ -65,6 +93,15 @@ class SearchResultAggregator:
             raise FileNotFoundError(f'No query file found: {filename}')
 
     def get_search_results(self, query: str) -> list:
+        '''
+        Fetches search results from Google for the given query.
+
+        Args:
+            query (str): The search query.
+
+        Returns:
+            list: A list of search result links.
+        '''
         url = f'https://www.google.com/search?q={query}&num={self.stop}&start={self.start}'
         headers = {
             'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
@@ -82,6 +119,15 @@ class SearchResultAggregator:
         return []
 
     def analyze_link(self, link: str) -> dict:
+        '''
+        Analyzes the given link to fetch its title.
+
+        Args:
+            link (str): The URL to analyze.
+
+        Returns:
+            dict: A dictionary containing the link and its title or an error message.
+        '''
         try:
             response = requests.get(link, timeout=10)  # Set timeout to 10 seconds
             if response.history:
@@ -107,6 +153,16 @@ class SearchResultAggregator:
             return {'link': link, 'error': f'Unexpected error: {e}'}
 
     def process_query(self, industry: str, query: str) -> tuple:
+        '''
+        Processes a single query for a given industry.
+
+        Args:
+            industry (str): The industry name.
+            query (str): The search query.
+
+        Returns:
+            tuple: A tuple containing the query and its results.
+        '''
         logging.info(f'Processing query: {query}')
         links = self.get_search_results(query)
         query_results = [self.analyze_link(link) for link in links] if links else []
@@ -115,6 +171,12 @@ class SearchResultAggregator:
         return query, query_results
 
     def run(self) -> dict:
+        '''
+        Runs the search result aggregation process.
+
+        Returns:
+            dict: A dictionary containing all aggregated search results.
+        '''
         all_results = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for industry, queries_list in self.queries.items():
@@ -136,6 +198,12 @@ class SearchResultAggregator:
         return all_results
 
     def get_links_by_industry(self) -> dict:
+        '''
+        Fetches search result links for each industry.
+
+        Returns:
+            dict: A dictionary containing links grouped by industry.
+        '''
         links_by_industry = {}
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for industry, queries_list in self.queries.items():
@@ -153,6 +221,12 @@ class SearchResultAggregator:
         return links_by_industry
 
     def stream_links_by_industry(self):
+        '''
+        Streams search result links for each industry.
+
+        Yields:
+            tuple: A tuple containing the industry and a link.
+        '''
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             for industry, queries_list in self.queries.items():
                 future_to_query = {executor.submit(self.get_search_results, query): query
